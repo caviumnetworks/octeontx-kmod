@@ -396,9 +396,6 @@ struct mbox_sso_convert_ns_getworks_iter {
 
 
 struct mbox_sso_grp_priority {
-	u8 vhgrp_id;		/* vhgrp id, PF driver is reposible for
-				 *  convertig to physical sso grp id [in] */
-				/* filelds of SSO_GRP(0..63)_PRI */
 	u8 wgt_left;  		/* [out] */
 	u8 weight;    		/* [in] [out] */
 	u8 affinity;  		/* [in] [out] */

@@ -76,7 +76,7 @@ static struct ssopf_vf *get_vf(struct ssopf *sso, u16 domain_id,
 	for (i = 0; i < sso->total_vfs; i++) {
 		if (sso->vf[i].domain.in_use &&
 		    sso->vf[i].domain.domain_id == domain_id &&
-		    sso->vf[i].domain.subdomain_id == 0) {
+		    sso->vf[i].domain.subdomain_id == subdomain_id) {
 			if (vf_idx)
 				*vf_idx = i;
 			return &sso->vf[i];
@@ -680,7 +680,6 @@ static int handle_mbox_msg_from_sso_vf(struct ssopf *sso,
 		reg = sso_reg_read(sso, SSO_PF_GRPX_PRI(vf_idx));
 
 		/* now update struct _grp_priority fields {} */
-		grp_prio->vhgrp_id = vf_idx;
 		grp_prio->wgt_left = (reg >> 24) & 0x3f; /* Bit 29:24 for wgt_left */
 		grp_prio->weight = (reg >> 16) & 0x3f; /* Bit 21:16 for weight */
 		grp_prio->affinity = (reg >> 8) & 0xf; /* Bit 11:8 for affinity */
