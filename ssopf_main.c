@@ -1326,7 +1326,7 @@ static void sso_remove(struct pci_dev *pdev)
 	sso_irq_free(sso);
 	sso_sriov_configure(pdev, 0);
 	sso_fini(sso);
-	symbol_put(rst);
+	symbol_put(rst_com);
 
 	/* release probed resources */
 	spin_lock(&octeontx_sso_devices_lock);
