@@ -1,7 +1,11 @@
 KDIR ?= /lib/modules/`uname -r`/build
 
-default:
-	$(MAKE) -C $(KDIR) M=$$PWD
+COMMON_ARGS := -C $(KDIR) M=`pwd`/src
+
+build:
+	$(MAKE)  $(COMMON_ARGS) modules
 
 clean:
-	    make -C $(KDIR)  M=$(PWD) clean
+	$(MAKE) -C $(KDIR) M=`pwd` clean
+
+.PHONY: build clean
