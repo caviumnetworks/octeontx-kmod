@@ -1,28 +1,71 @@
-# octeontx-kmod
-OcteonTX network accelerator resource manager kernel module
+# OcteonTX Network Accelerator Resource Manager Kernel Drivers
 
-## Steps to build/install octeontx-kmod drv and configure resource manager.
+These drivers support Cavium's T83 family of Network processor device.
 
-1) Clone Octeontx-kmod repo.
-git clone https://github.com/caviumnetworks/octeontx-kmod
+This archive builds bunch of module, Out of which octeontx.ko module creates
+domain. A domain is collection of accelerator blocks. Octeontx.ko exposes
+sysfs so to reconfigure domain.
 
-2) Clone linux.git repo.
->> git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
->> git checkout -b linux-v4.9 v4.9
+For more information Or If questions arise or an issue is identified related
+the released driver code, please email us on:
 
-2.0) Apply octeontx-kmod specific patches.
->> cd linux
->> git am ../octeontx-kmod/4.9.x/*.patch
+octeontx-kmod@caviumnetworks.microsoftonline.com
 
-2.1) Then build and install the kernel on Octeontx target.
-make -j32 && make modules_install -j12.
+# Building and Installing
 
-2.2) Reboot to latest installed kernel.
+Clone Octeontx-kmod repo:
 
-3) Install octeontx-kmod drv and configure resource manager.
->> cd octeontx-kmod
->> ./install.sh
+	$ git clone https://github.com/caviumnetworks/octeontx-kmod
 
-Note that `Install.sh` will build/insert the module and configures
-the resource manager.
+Clone linux.git repo:
+
+	$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+	$ git checkout -b linux-v4.9 v4.9
+
+Apply octeontx-kmod specific patches to kernel:
+
+	$ cd linux
+	$ git am ../octeontx-kmod/patches/4.9.x/*.patch
+
+Copy octeontx config to linux :
+
+	$ cp ../octeontx-kmo/configs/config_octeontx .
+
+Build and Install the kernel on Octeontx(T83) target:
+
+	$ make menuconfig
+	$ make -j32
+	$ make modules_install -j12.
+
+Reboot to latest installed kernel.
+
+Build octeontx-kmod drv:
+
+	$ cd ../octeontx-kmod
+	$ make clean
+	$ make build
+
+Install and configure octeontx driver:
+
+	$ ./install.sh
+
+	Note that `Install.sh` will insert the module and configures
+	the resource manager.
+
+## RM driver
+
+ONA driver is a Resource Manager aka Collecton of PF drivers. Its job is to
+configure resources for VF's and establish a communication link between
+PF <--> VF.
+
+## Sources
+
+| Source              | Description                                           |
+| ------------------- | ----------------------------------------------------- |
+| octeontx_main.c     | ONA Resource manager				      |
+| octeontx_mbox.c     | ONA mailbox used for pf <--> vf communication         |
+| rst_main.c	      | ONA reset driver                                      |
+| fpapf_main.c        | ONA External mempool PF driver                        |
+| ssopf_main.c        | ONA Event based Schedular PF driver                   |
+| ssowpf_main.c       | ONA HWS PF driver				      |
 
