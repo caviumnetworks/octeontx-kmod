@@ -77,17 +77,19 @@ Has octeontx kernel config.
 
 Has patches for kernel and dpdk.
 
-1. Kernel specific patches are in 4.9.x directory.
+1. Kernel specific patches are in patches/4.9.x directory.
 
 Refer "Build and Install" to apply patches on linux 4.9 kernel.
 
-2. DPDK specific patches are in dpdk directory.
+2. DPDK bind script patch is in patches/dpdk directory.
 
 Apply patch on top of dpdk:
 
-	$ git am dpdk/*.patch
+	$ git am patches/dpdk/*.patch
 
-It's a temporary hack to let dpdk's binding script detect Cavm PCI devices.
+It's a temporary hack to let dpdk's binding script detect Cavium PCI devices.
+
+Cavium PCI device snapshot:
 
 	$ ./usertools/dpdk-devbind.py --status
 
@@ -119,20 +121,7 @@ It's a temporary hack to let dpdk's binding script detect Cavm PCI devices.
 
 	Crypto devices using DPDK-compatible driver
 	===========================================
-	0000:07:00.1 'Device a04b' drv=vfio-pci unused=
-	0000:07:00.2 'Device a04b' drv=vfio-pci unused=
-	0000:07:00.3 'Device a04b' drv=vfio-pci unused=
-	0000:07:00.4 'Device a04b' drv=vfio-pci unused=
-	0000:07:00.5 'Device a04b' drv=vfio-pci unused=
-	0000:07:00.6 'Device a04b' drv=vfio-pci unused=
-	0000:07:00.7 'Device a04b' drv=vfio-pci unused=
-	0000:07:01.0 'Device a04b' drv=vfio-pci unused=
-	0000:08:00.1 'Device a04d' drv=vfio-pci unused=
-	0000:08:00.2 'Device a04d' drv=vfio-pci unused=
-	0000:08:00.3 'Device a04d' drv=vfio-pci unused=
-	0000:08:00.4 'Device a04d' drv=vfio-pci unused=
-	0000:08:00.5 'Device a04d' drv=vfio-pci unused=
-	0000:08:00.6 'Device a04d' drv=vfio-pci unused=
+	<none>
 
 	Crypto devices using kernel driver
 	==================================
@@ -168,6 +157,14 @@ It's a temporary hack to let dpdk's binding script detect Cavm PCI devices.
 	0000:01:0d.1 'Device a042' unused=vfio-pci
 	0000:01:0d.2 'Device a042' unused=vfio-pci
 	0000:01:0d.3 'Device a042' unused=vfio-pci
+	0000:07:00.1 'Device a04b' unused=vfio-pci
+	0000:07:00.2 'Device a04b' unused=vfio-pci
+	0000:07:00.3 'Device a04b' unused=vfio-pci
+	0000:07:00.4 'Device a04b' unused=vfio-pci
+	0000:07:00.5 'Device a04b' unused=vfio-pci
+	0000:07:00.6 'Device a04b' unused=vfio-pci
+	0000:07:00.7 'Device a04b' unused=vfio-pci
+	0000:07:01.0 'Device a04b' unused=vfio-pci
 	0000:07:01.1 'Device a04b' unused=vfio-pci
 	0000:07:01.2 'Device a04b' unused=vfio-pci
 	0000:07:01.3 'Device a04b' unused=vfio-pci
@@ -192,6 +189,12 @@ It's a temporary hack to let dpdk's binding script detect Cavm PCI devices.
 	0000:07:03.6 'Device a04b' unused=vfio-pci
 	0000:07:03.7 'Device a04b' unused=vfio-pci
 	0000:07:04.0 'Device a04b' unused=vfio-pci
+	0000:08:00.1 'Device a04d' unused=vfio-pci
+	0000:08:00.2 'Device a04d' unused=vfio-pci
+	0000:08:00.3 'Device a04d' unused=vfio-pci
+	0000:08:00.4 'Device a04d' unused=vfio-pci
+	0000:08:00.5 'Device a04d' unused=vfio-pci
+	0000:08:00.6 'Device a04d' unused=vfio-pci
 	0000:08:00.7 'Device a04d' unused=vfio-pci
 	0000:08:01.0 'Device a04d' unused=vfio-pci
 	0000:08:01.1 'Device a04d' unused=vfio-pci
@@ -215,4 +218,20 @@ It's a temporary hack to let dpdk's binding script detect Cavm PCI devices.
 	0001:02:00.0 'Device a047' unused=vfio-pci
 	0001:03:00.0 'Device a048' unused=vfio-pci
 	0001:05:00.0 'Device a045' unused=vfio-pci
+
+Binding Cavium PCI devices to DPDK:
+
+1. Binding 6 queues and 6 ports.
+
+Note that queues are SSOGRP_vf and ports SSOW_VF. SSOGRP_vf
+BDF starts from 0000:07:00.1 and SSOW_vf starts from 0000:08:00.1.
+
+So in ordert to bind 6 queues(aka SSOGRP_vf) and 6 ports (aka SSOW_vf),
+Use below command:
+
+	$ ./usertools/dpdk-devbind.py -b vfio-pci 0000:08:00.1 0000:08:00.2
+		0000:08:00.3 0000:08:00.4 0000:08:00.5 0000:08:00.6
+		0000:07:00.1 0000:07:00.2 0000:07:00.3 0000:07:00.4
+		0000:07:00.5 0000:07:00.6
+
 
