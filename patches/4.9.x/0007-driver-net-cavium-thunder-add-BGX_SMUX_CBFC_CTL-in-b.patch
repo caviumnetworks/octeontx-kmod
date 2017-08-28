@@ -1,0 +1,29 @@
+From c928a10edba68f589fc0c0eb58d9fcc898d05515 Mon Sep 17 00:00:00 2001
+From: Santosh Shukla <santosh.shukla@caviumnetworks.com>
+Date: Mon, 28 Aug 2017 12:55:56 +0000
+Subject: [PATCH 7/7] driver/net/cavium/thunder: add BGX_SMUX_CBFC_CTL in bgx.h
+
+Signed-off-by: Santosh Shukla <santosh.shukla@caviumnetworks.com>
+---
+ drivers/net/ethernet/cavium/thunder/thunder_bgx.h | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/net/ethernet/cavium/thunder/thunder_bgx.h b/drivers/net/ethernet/cavium/thunder/thunder_bgx.h
+index 7d59cb96160d..6b76ed2d5a53 100644
+--- a/drivers/net/ethernet/cavium/thunder/thunder_bgx.h
++++ b/drivers/net/ethernet/cavium/thunder/thunder_bgx.h
+@@ -138,6 +138,11 @@
+ #define BGX_SMUX_CTL			0x20200
+ #define  SMU_CTL_RX_IDLE			BIT_ULL(0)
+ #define  SMU_CTL_TX_IDLE			BIT_ULL(1)
++#define	BGX_SMUX_CBFC_CTL		0x20218
++#define	RX_EN					BIT_ULL(0)
++#define	TX_EN					BIT_ULL(1)
++#define	BCK_EN					BIT_ULL(2)
++#define	DRP_EN					BIT_ULL(3)
+ 
+ #define BGX_GMP_PCS_MRX_CTL		0x30000
+ #define	 PCS_MRX_CTL_RST_AN			BIT_ULL(9)
+-- 
+2.13.0
+
