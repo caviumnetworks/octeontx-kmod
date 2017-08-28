@@ -35,11 +35,11 @@ void *ram_mbox_buf;	/* Temp backing buff for rambox */
 static unsigned int max_grps = 32;
 module_param(max_grps, uint, 0444);
 MODULE_PARM_DESC(max_grps,
-		"Limit the number of sso groups(0=maximum number of groups");
+		 "Limit the number of sso groups(0=maximum number of groups");
 static unsigned int max_events = 100000;
 module_param(max_events, int, 0444);
 MODULE_PARM_DESC(max_events,
-		"Number of DRAM event entries");
+		 "Number of DRAM event entries");
 
 #define MAX_SSO_RST_TIMEOUT_US  3000
 
@@ -47,7 +47,7 @@ MODULE_PARM_DESC(max_events,
 #define NSEC2CLKS(ns, sclk_freq)	(((ns) * (sclk_freq)) / NSEC_PER_SEC)
 
 #define MIN_NW_TIM_CLK	1024
-#define MAX_NW_TIM_CLK	(1024*1024)	/* nw_tim is 10 bit wide ~ 1024*/
+#define MAX_NW_TIM_CLK	(1024 * 1024)	/* nw_tim is 10 bit wide ~ 1024*/
 
 /* In Cavium OcteonTX SoCs, all accesses to the device registers are
  * implicitly strongly ordered.
@@ -119,15 +119,12 @@ static u64 sso_pf_get_tmo(struct ssopf *sso)
 
 	/* Get current tick */
 	nw_clk = sso_reg_read(sso, SSO_PF_NW_TIM) & 0x3ff;
-
 	nw_clk += 1;
 
-	/*
-	 * Convert from set-Bit to multiple of 1024 clock cycles(Refer HRM:
-	 * SSO_NW_TIM)
-	 * */
+	/* Conevrt from set-Bit to multiple of 1024 clock cycles
+	 * Refer HRM: SSO_NW_TIM
+	 */
 	nw_clk <<= 10;
-
 	/* Get SCLK */
 	sclk_freq = rst->get_sclk_freq(sso->id);
 
@@ -143,17 +140,13 @@ static void sso_pf_set_tmo(struct ssopf *sso, u64 ns)
 	/* Get SCLK */
 	sclk_freq = rst->get_sclk_freq(sso->id);
 
-	/*
-	 * Transalate nsec to clock
-	 **/
+	/* Transalate nsec to clock */
 	nw_clk = NSEC2CLKS(ns, sclk_freq);
-
-	/*
-	 * Convert from multiple of 1024 clk cycle to Bit-posi (Ref HRM:
-	 * SSO_NW_TIM)
-	 * */
+	/* Conevrt from set-Bit to multiple of 1024 clock cycles
+	 * Refer HRM: SSO_NW_TIM
+	 */
 	nw_clk >>= 10;
-	if(nw_clk)
+	if (nw_clk)
 		nw_clk -= 1;
 
 	/* write new clk value to Bit pos 9:0 of SSO_NW_TIM */
@@ -168,22 +161,18 @@ static u32 sso_pf_ns_to_iter(struct ssopf *sso, u32 wait_ns)
 	/* Get SCLK */
 	sclk_freq = rst->get_sclk_freq(sso->id);
 
-	/*Transalate nsec to clock
-	*/
+	/* Transalate nsec to clock */
 	new_tmo = NSEC2CLKS(wait_ns, sclk_freq);
 
-	/* Get NW_TIM clock and translate to sclk_freq */
+	/*Get NW_TIM clock and translate to sclk_freq */
 	cur_tmo = sso_reg_read(sso, SSO_PF_NW_TIM) & 0x3ff;
 	cur_tmo += 1;
-
-	/*
-	 * Convert from set-Bit to multiple of 1024 clock cycles(Refer HRM:
-	 * SSO_NW_TIM)
-	 * */
+	/* Conevrt from set-Bit to multiple of 1024 clock cycles
+	 * Refer HRM: SSO_NW_TIM
+	 */
 	cur_tmo <<= 10;
 
 	getwork_iter = new_tmo / cur_tmo;
-
 	if (!getwork_iter)
 		getwork_iter = 1;
 
@@ -211,8 +200,7 @@ int ssopf_master_send_message(struct mbox_hdr *hdr,
 			sso->id, FPA_SSO_XAQ_GMID,
 			hdr, req, resp, add_data);
 	} else {
-		dev_err(&sso->pdev->dev,
-				"SSO messahe dispatch, wrong VF type\n");
+		dev_err(&sso->pdev->dev, "SSO messahe dispatch, wrong VF type\n");
 		ret = -1;
 	}
 
@@ -293,11 +281,10 @@ static u64 sso_pf_create_domain(u32 id, u16 domain_id,
 			break;
 		}
 	}
+	spin_unlock(&octeontx_sso_devices_lock);
 
-	if (!sso) {
-		spin_unlock(&octeontx_sso_devices_lock);
+	if (!sso)
 		return 0;
-	}
 
 	for (i = 0; i < sso->total_vfs; i++) {
 		if (sso->vf[i].domain.in_use) {
@@ -311,10 +298,9 @@ static u64 sso_pf_create_domain(u32 id, u16 domain_id,
 			sso->vf[i].domain.master = master;
 			sso->vf[i].domain.master_data = master_data;
 
-			/*
-			* Map num_grps resources
-			* - Assumes all the ggrp belong to one domain
-			* */
+			/* Map num_grps resources
+			 * - Assumes all the ggrp belong to one domain
+			 */
 			reg = SSO_MAP_VALID(1ULL) |
 			     SSO_MAP_VHGRP(i) |
 			     SSO_MAP_GGRP(sso->vf[i].domain.subdomain_id) |
@@ -322,7 +308,8 @@ static u64 sso_pf_create_domain(u32 id, u16 domain_id,
 			sso_reg_write(sso, SSO_PF_MAPX(i), reg);
 
 			/* Configure default prio that can later be changed by
-			 * SSO_GRP_SET_PRIORITY call from userspace */
+			 * SSO_GRP_SET_PRIORITY call from userspace
+			 */
 			reg = ((0x3fULL) << 16) | ((0xfULL) << 8) | (0ULL);
 			sso_reg_write(sso, SSO_PF_GRPX_PRI(i), reg);
 			vf_start = pci_resource_start(sso->pdev,
@@ -333,20 +320,22 @@ static u64 sso_pf_create_domain(u32 id, u16 domain_id,
 				ioremap(vf_start, SSO_VF_CFG_SIZE);
 
 			if (kobj && g_name) {
-
 				virtfn = pci_get_domain_bus_and_slot(
 						pci_domain_nr(sso->pdev->bus),
-						pci_iov_virtfn_bus(sso->pdev, i),
-						pci_iov_virtfn_devfn(sso->pdev, i));
+						pci_iov_virtfn_bus(sso->pdev,
+								   i),
+						pci_iov_virtfn_devfn(sso->pdev,
+								     i));
 				if (!virtfn)
 					break;
 				sysfs_add_link_to_group(kobj, g_name,
-					&virtfn->dev.kobj,
-					virtfn->dev.kobj.name);
+							&virtfn->dev.kobj,
+							virtfn->dev.kobj.name);
 			}
 			/* write did/sdid in temp register for vf probe
 			 * to get to know his vf_idx/subdomainid
-			 * this mechanism is simmilar to all VF types */
+			 * this mechanism is simmilar to all VF types
+			 */
 			identify(&sso->vf[i], domain_id, vf_idx);
 
 			mbox_init(&sso->vf[i].mbox,
@@ -362,8 +351,6 @@ static u64 sso_pf_create_domain(u32 id, u16 domain_id,
 			}
 		}
 	}
-
-	spin_unlock(&octeontx_sso_devices_lock);
 
 	if (vf_idx != num_grps) {
 		sso_pf_remove_domain(id, domain_id);
@@ -457,7 +444,7 @@ static int sso_pf_set_mbox_ram(u32 node, u16 domain_id,
 
 	spin_unlock(&octeontx_sso_devices_lock);
 
-	if (i == sso->total_vfs)
+	if (vf_idx < 0)
 		return -ENODEV; /* SSOVF for domain not found */
 
 	mbox_init(&sso->vf[i].mbox,
@@ -618,10 +605,10 @@ static int handle_mbox_msg_from_sso_vf(struct ssopf *sso,
 	hdr->res_code = MBOX_RET_INVALID;
 	resp->data = 0;
 
-	/* Get to VF to which the message is addressed (also validate hdr->vf_id) */
 	vf = get_vf(sso, domain_id, hdr->vfid, &vf_idx);
+	/* hdr->vfid cound be out of range, use common error response */
 	if (!vf)
-		return -1; /* hdr->vfid cound be out of range, use common error response */
+		return -1;
 
 	switch (hdr->msg) {
 	case IDENTIFY:
@@ -630,25 +617,6 @@ static int handle_mbox_msg_from_sso_vf(struct ssopf *sso,
 		hdr->res_code = MBOX_RET_SUCCESS;
 		ret = 0;
 		break;
-	case SSO_GETDOMAINCFG:
-		/* This is temp, this will be moved to octeontx*/
-		hdr->res_code = MBOX_RET_SUCCESS;
-		resp->cfg.sso_count = 1;
-		resp->cfg.ssow_count = 32;
-		resp->cfg.fpa_count = 1;
-		resp->cfg.pko_count = 1;
-		resp->cfg.tim_count = 0;
-		/* Note:
-		 * - remove above resp-> value update and always
-		 * use add_data for resp message
-		 * - above resp-> update gonna become redundent as
-		 *   because coming patch will get rid of *resp param
-		 *   from function */
-		memcpy(add_data, resp, sizeof(*resp));
-		resp->data = sizeof(*resp);
-		ret = 0;
-		break;
-
 	case SSO_GET_DEV_INFO:
 		get_dev_info = add_data;
 
@@ -696,16 +664,16 @@ static int handle_mbox_msg_from_sso_vf(struct ssopf *sso,
 		/* NOTE: Until pf_mapping make way into pf driver
 		 * ,. Follow simple mapping approach ie.. vhgrp = pool = vf_id
 		 * Next change set for pf_mapping will address mapping.(Todo)
-		 **/
+		 */
 		grp_prio = add_data;
 
 		reg = sso_reg_read(sso, SSO_PF_GRPX_PRI(vf_idx));
 
 		/* now update struct _grp_priority fields {} */
-		grp_prio->wgt_left = (reg >> 24) & 0x3f; /* Bit 29:24 for wgt_left */
-		grp_prio->weight = (reg >> 16) & 0x3f; /* Bit 21:16 for weight */
-		grp_prio->affinity = (reg >> 8) & 0xf; /* Bit 11:8 for affinity */
-		grp_prio->pri = reg & 0x7; /* Bit 2:0 for pri */
+		grp_prio->wgt_left = (reg >> 24) & 0x3f;
+		grp_prio->weight = (reg >> 16) & 0x3f;
+		grp_prio->affinity = (reg >> 8) & 0xf;
+		grp_prio->pri = reg & 0x7;
 
 		hdr->res_code = MBOX_RET_SUCCESS;
 		/* update len */
@@ -750,12 +718,15 @@ static void handle_mbox_msg_from_vf(struct ssopf *sso, int vf_idx)
 	req_size = mbox_receive(&sso->vf[vf_idx].mbox, &hdr, ram_mbox_buf,
 				MBOX_MAX_MSG_SIZE);
 	if (req_size < 0) {
-		dev_dbg(&sso->pdev->dev, "MBox return no message, spurious IRQ?\n");
+		dev_dbg(&sso->pdev->dev,
+			"MBox return no message, spurious IRQ?\n");
 		return;
 	}
 
-	/* For SSO_VF inactive or other than subdomain_id=0, we skip the message processing
-	 * We still reply with error */
+	/* For SSO_VF inactive or other than subdomain_id=0,
+	 * we skip the message processing
+	 * We still reply with error
+	 */
 	if (!sso->vf[vf_idx].domain.in_use ||
 	    sso->vf[vf_idx].domain.subdomain_id != 0) {
 		replymsg = NULL;
@@ -767,17 +738,19 @@ static void handle_mbox_msg_from_vf(struct ssopf *sso, int vf_idx)
 	resp.data = 0;
 	switch (hdr.coproc) {
 	case SSO_COPROC:
-		memcpy(&req, ram_mbox_buf, sizeof(req));
-		ret = handle_mbox_msg_from_sso_vf(
-			sso, sso->vf[vf_idx].domain.domain_id,
-			&hdr,
-			&req /* Unused for sso */,
-			&resp,
-			ram_mbox_buf);
-		/* prep for replymsg */
-		replymsg = ram_mbox_buf;
-		replysize = resp.data;
-		break;
+		if (hdr.msg != SSO_GETDOMAINCFG) {
+			memcpy(&req, ram_mbox_buf, sizeof(req));
+			ret = handle_mbox_msg_from_sso_vf(
+				sso, sso->vf[vf_idx].domain.domain_id,
+				&hdr,
+				&req /* Unused for sso */,
+				&resp,
+				ram_mbox_buf);
+			/* prep for replymsg */
+			replymsg = ram_mbox_buf;
+			replysize = resp.data;
+			break;
+		}
 	default:
 		/* call octtx_master_receive_message for msg dispatch */
 		ret = sso->vf[vf_idx].domain.master->receive_message(
@@ -823,9 +796,9 @@ static void handle_mbox(struct work_struct *wq)
 
 		for_each_set_bit(vf_idx, (unsigned long *)&reg,
 				 sizeof(reg) * 8) {
-
 			/* SSO VF should handle msg only if it is a domain
-			 * master */
+			 * master
+			 */
 			if (sso->vf[vf_idx].domain.in_use)
 				handle_mbox_msg_from_vf(sso, vf_idx);
 		}
@@ -985,9 +958,9 @@ static inline void sso_configure_on_chip_res(struct ssopf *sso, u16 ssogrps)
 	 * operations for 2500 coprocessor (SCLK) cycles. Assuming SCLK running
 	 * at >1MHz, A delay of 2500us would be enough for the worst case.
 	 */
-	udelay(2500);
+	mdelay(3);
 	while (sso_reg_read(sso, SSO_PF_RESET)) {
-		udelay(1);
+		usleep_range(1, 100);
 		if (++counter > MAX_SSO_RST_TIMEOUT_US) {
 			dev_warn(&sso->pdev->dev, "failed to reset sso\n");
 			break;
@@ -1003,17 +976,15 @@ static inline void sso_configure_on_chip_res(struct ssopf *sso, u16 ssogrps)
 	/* Enforce minimum per HRM */
 	if (iaq_rsvd < 2)
 		iaq_rsvd = 2;
-
 	iaq_max = iaq_rsvd << 7;
 	if (iaq_max >= (1 << 13))
 		iaq_max = (1 << 13) - 1;
 	dev_dbg(&sso->pdev->dev, "iaq: free_cnt:0x%llx rsvd:0x%x max:0x%llx\n",
-			iaq_free_cnt, iaq_rsvd, iaq_max);
+		iaq_free_cnt, iaq_rsvd, iaq_max);
 
 	/* Configure TAQ entries */
 	taq_free_cnt = sso_reg_read(sso, SSO_PF_TAQ_CNT) &
-				SSO_TAQ_CNT_FREE_CNT_MASK;
-
+					SSO_TAQ_CNT_FREE_CNT_MASK;
 	/* Give out half of all buffers fairly, other half floats */
 	taq_rsvd = taq_free_cnt / ssogrps / 2;
 	/* Enforce minimum per HRM */
@@ -1024,7 +995,7 @@ static inline void sso_configure_on_chip_res(struct ssopf *sso, u16 ssogrps)
 	if (taq_max >= (1 << 11))
 		taq_max = (1 << 11) - 1;
 	dev_dbg(&sso->pdev->dev, "taq: free_cnt:0x%llx rsvd:0x%x max:0x%llx\n",
-		 taq_free_cnt, taq_rsvd, taq_max);
+		taq_free_cnt, taq_rsvd, taq_max);
 
 	for (grp = 0; grp < ssogrps; grp++) {
 		tmp = sso_reg_read(sso, SSO_PF_GRPX_IAQ_THR(grp));
@@ -1039,7 +1010,7 @@ static inline void sso_configure_on_chip_res(struct ssopf *sso, u16 ssogrps)
 		/* Add the delta of added rsvd iaq entries */
 		if (add)
 			sso_reg_write(sso, SSO_PF_AW_ADD,
-				((add & SSO_AW_ADD_RSVD_MASK) <<
+				      ((add & SSO_AW_ADD_RSVD_MASK) <<
 					 SSO_AW_ADD_RSVD_SHIFT));
 		iaq_rsvd_cnt += iaq_rsvd;
 
@@ -1054,34 +1025,33 @@ static inline void sso_configure_on_chip_res(struct ssopf *sso, u16 ssogrps)
 		/* Add the delta of added rsvd taq entries */
 		if (add)
 			sso_reg_write(sso, SSO_PF_TAQ_ADD,
-				((add & SSO_TAQ_ADD_RSVD_MASK) <<
-					 SSO_TAQ_ADD_RSVD_SHIFT));
+				      ((add & SSO_TAQ_ADD_RSVD_MASK) <<
+					SSO_TAQ_ADD_RSVD_SHIFT));
 		taq_rsvd_cnt += taq_rsvd;
 	}
 
 	dev_dbg(&sso->pdev->dev, "iaq-rsvd=0x%x/0x%llx taq-rsvd=0x%x/0x%llx\n",
-			iaq_rsvd_cnt, iaq_free_cnt, taq_rsvd_cnt, taq_free_cnt);
-	/*
-	 * Verify SSO_AW_WE[RSVD_FREE], TAQ_CNT[RSVD_FREE] are greater than
+		iaq_rsvd_cnt, iaq_free_cnt, taq_rsvd_cnt, taq_free_cnt);
+	/* Verify SSO_AW_WE[RSVD_FREE], TAQ_CNT[RSVD_FREE] are greater than
 	 * or equal to sum of IAQ[RSVD_THR], TAQ[RSRVD_THR] fields
 	 */
 	tmp = sso_reg_read(sso, SSO_PF_AW_WE) >> SSO_AW_WE_RSVD_CNT_SHIFT;
 	tmp &= SSO_AW_WE_RSVD_CNT_MASK;
 	if (tmp < iaq_rsvd_cnt) {
 		dev_warn(&sso->pdev->dev, "wrong iaq res alloc math %llx:%x\n",
-			tmp, iaq_rsvd_cnt);
+			 tmp, iaq_rsvd_cnt);
 		sso_reg_write(sso, SSO_PF_AW_WE,
-			(iaq_rsvd_cnt & SSO_AW_WE_RSVD_CNT_MASK) <<
-				 SSO_AW_WE_RSVD_CNT_SHIFT);
+			      (iaq_rsvd_cnt & SSO_AW_WE_RSVD_CNT_MASK) <<
+				SSO_AW_WE_RSVD_CNT_SHIFT);
 	}
 	tmp = sso_reg_read(sso, SSO_PF_TAQ_CNT) >> SSO_TAQ_CNT_RSVD_CNT_SHIFT;
 	tmp &= SSO_TAQ_CNT_FREE_CNT_MASK;
 	if (tmp < taq_rsvd_cnt) {
 		dev_warn(&sso->pdev->dev, "wrong taq res alloc math %llx:%x\n",
-			tmp, taq_rsvd_cnt);
+			 tmp, taq_rsvd_cnt);
 		sso_reg_write(sso, SSO_PF_TAQ_CNT,
-			(taq_rsvd_cnt & SSO_TAQ_CNT_RSVD_CNT_MASK) <<
-				 SSO_TAQ_CNT_RSVD_CNT_SHIFT);
+			      (taq_rsvd_cnt & SSO_TAQ_CNT_RSVD_CNT_MASK) <<
+				SSO_TAQ_CNT_RSVD_CNT_SHIFT);
 	}
 }
 
@@ -1134,7 +1104,6 @@ static int sso_init(struct ssopf *sso)
 
 	sso->xaq_buf_size = xaq_buf_size;
 
-
 	rst = try_then_request_module(symbol_get(rst_com), "rst");
 	if (!rst)
 		return -ENODEV;
@@ -1164,7 +1133,7 @@ static int sso_init(struct ssopf *sso)
 		return -ENODEV;
 	}
 
-	xaq_buffers = (max_events + xae_waes - 1)/xae_waes;
+	xaq_buffers = (max_events + xae_waes - 1) / xae_waes;
 	xaq_buffers = (nr_grps * 2) + 48 + xaq_buffers;
 
 	err = fpavf->setup(fpa, xaq_buffers, xaq_buf_size,
@@ -1198,7 +1167,7 @@ static int sso_init(struct ssopf *sso)
 	sso_reg_write(sso, SSO_PF_XAQ_GMCTL, FPA_SSO_XAQ_GMID);
 
 	dev_dbg(&sso->pdev->dev, "aura=%d gmid=%d xaq_buffers=%d\n",
-			FPA_SSO_XAQ_AURA, FPA_SSO_XAQ_GMID, xaq_buffers);
+		FPA_SSO_XAQ_AURA, FPA_SSO_XAQ_GMID, xaq_buffers);
 
 	/* Enable XAQ*/
 	sso_reg = sso_reg_read(sso, SSO_PF_AW_CFG);
@@ -1294,24 +1263,20 @@ static int sso_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		return err;
 	}
 
-	/*
-	 * Alloc local memory to copy message to/from rambox.
+	/* Alloc local memory to copy message to/from rambox.
 	 * This local memory in next revision will be removed.
 	 * such that kernel/user does message rd/wr on single
 	 * buffer called rambox, Implementing that design right
 	 * demands gaurantee for true mutual execusion for message
 	 * written accessed by one party at a time.
-	 *
-	 * Current rambox design not truely accomodate that;
+	 * Current rambox design not truely accommodate that;
 	 * CAS implementation in future will gaurantee locking
 	 * parity between user/kernel space, then will get rid
 	 * of local buffer data copy approach.
-	 *
 	 * - Assuiming max message buffer mey not exceed 1024.
-	 * */
+	 */
 	ram_mbox_buf = kzalloc(MBOX_MAX_MSG_SIZE, GFP_KERNEL);
 	if (!ram_mbox_buf) {
-		printk("not enough memory !! MBOX_MAX_MSG_SIZE failed!!\n");
 		err = -ENOMEM;
 		return err;
 	}
@@ -1347,7 +1312,6 @@ static void sso_remove(struct pci_dev *pdev)
 	sso_irq_free(sso);
 	sso_sriov_configure(pdev, 0);
 	sso_fini(sso);
-	symbol_put(rst_com);
 
 	/* release probed resources */
 	spin_lock(&octeontx_sso_devices_lock);

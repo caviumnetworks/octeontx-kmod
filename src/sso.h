@@ -100,7 +100,8 @@
 #define SSO_PF_GRPX_TAQ_THR(x)		(0x20000100 | ((x) << 20))
 #define SSO_PF_GRPX_PRI(x)		(0x20000200 | ((x) << 20))
 #define SSO_PF_GRPX_XAQ_LIMIT(x)	(0x20000220 | ((x) << 20))
-#define SSO_PF_VHGRPX_MBOX(x, y)	(0x20000400 | ((x) << 20) | ((y) << 3))
+#define SSO_PF_VHGRPX_MBOX(x, y)	(0x20000400 | ((x) << 20) | \
+					 ((y) << 3))
 #define SSO_PF_GRPX_WS_PC(x)		(0x20001000 | ((x) << 20))
 #define SSO_PF_GRPX_EXT_PC(x)		(0x20001100 | ((x) << 20))
 #define SSO_PF_GRPX_WA_PC(x)		(0x20001200 | ((x) << 20))
@@ -108,7 +109,8 @@
 #define SSO_PF_GRPX_DS_PC(x)		(0x20001400 | ((x) << 20))
 #define SSO_PF_HWSX_ARB(x)		(0x40000100 | ((x) << 20))
 #define SSO_PF_HWSX_GMCTL(x)		(0x40000200 | ((x) << 20))
-#define SSO_PF_HWSX_SX_GRPMASK(x, y)	(0x40001000 | ((x) << 20) | (((y)&1) << 5))
+#define SSO_PF_HWSX_SX_GRPMASK(x, y)	(0x40001000 | ((x) << 20) | \
+					 (((y) & 1) << 5))
 #define SSO_PF_IPL_FREEX(x)		(0x80000000 | ((x) << 3))
 #define SSO_PF_IPL_IAQ(x)		(0x80040000 | ((x) << 3))
 #define SSO_PF_IPL_DESCHED(x)		(0x80060000 | ((x) << 3))
@@ -249,8 +251,8 @@ struct ssopf {
 };
 
 struct ssopf_com_s {
-	u64 (*create_domain)(u32, u16, u32, void *, void *, struct kobject *kobj,
-			char *g_name);
+	u64 (*create_domain)(u32, u16, u32, void *, void *,
+			     struct kobject *kobj, char *g_name);
 	int (*free_domain)(u32, u16);
 	int (*reset_domain)(u32, u16);
 	int (*send_message)(u32, u16, struct mbox_hdr *hdr,
@@ -282,8 +284,8 @@ struct ssowpf {
 };
 
 struct ssowpf_com_s {
-	int (*create_domain)(u32, u16, u32, void *, void *, struct kobject *kobj,
-			char *g_name);
+	int (*create_domain)(u32, u16, u32, void *, void *,
+			     struct kobject *kobj, char *g_name);
 	int (*free_domain)(u32, u16);
 	int (*reset_domain)(u32, u16, u64);
 	int (*receive_message)(u32 id, u16 domain_id,

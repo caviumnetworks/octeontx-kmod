@@ -29,7 +29,6 @@ struct rstpf {
 	struct list_head	list;
 };
 
-
 /* In Cavium OcteonTX SoCs, all accesses to the device registers are
  * implicitly strongly ordered.
  * So writeq_relaxed() and readq_relaxed() are safe to use
@@ -75,10 +74,8 @@ static u64 rst_get_sclk_freq(int node)
 	struct rstpf *rst = NULL;
 
 	rst = rst_get(node);
-	if (!rst) {
-		printk("%s: No RST device found.\n", __func__);
+	if (!rst)
 		return 0;
-	}
 
 	/* Bit 38:33 is PNR_MULL */
 	sclk_freq = (rst_reg_read(rst, RST_BOOT) >> 33) & 0x3f;

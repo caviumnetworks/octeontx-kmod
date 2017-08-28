@@ -34,19 +34,19 @@ typedef enum {
  * if we TX/RX
  */
 #define MBOX_CHAN_IDX(_mbox, _own) \
-	((((_mbox->chan_own) & 0x1) + ((_own) & 0x1)) & 0x1)
+	(((((_mbox)->chan_own) & 0x1) + ((_own) & 0x1)) & 0x1)
 
 /* macro return the channell MBOX register address depending if we RX or TX */
 #define MBOX_REGISTER(_mbox, _own) \
-	(_mbox->mbox_base + (MBOX_CHAN_IDX(_mbox, _own) * sizeof(uint64_t)))
+	((_mbox)->mbox_base + (MBOX_CHAN_IDX((_mbox), (_own)) * sizeof(uint64_t)))
 
 /* macro return the RAM MBOX address depending if we RX or TX */
 #define MBOX_RAM_ADDRESS(_mbox, _own) ( \
-	(_mbox->ram_base + \
-	 (MBOX_CHAN_IDX(_mbox, _own) ? 0 : (_mbox->ram_size / 2))))
+	((_mbox)->ram_base + \
+	 (MBOX_CHAN_IDX(_mbox, _own) ? 0 : ((_mbox)->ram_size / 2))))
 
 void mbox_init(struct mbox *mbox, void *mbox_base, void *ram_base,
-		size_t ram_size, mbox_side_t side)
+	       size_t ram_size, mbox_side_t side)
 {
 	atomic64_t *ram_hdr_addr;
 	struct mbox_ram_hdr old_hdr;
@@ -65,9 +65,9 @@ void mbox_init(struct mbox *mbox, void *mbox_base, void *ram_base,
 	ram_hdr_addr = MBOX_RAM_ADDRESS(mbox, MBOX_CHAN_OWN);
 
 	/* initialize the channel with tag left by last setup
-	* the value of tag does not mather. What mathers is that new tag value
-	* must be +1 so we notify that previous transactions are invalid
-	*/
+	 * the value of tag does not mather. What mathers is that new tag value
+	 * must be +1 so we notify that previous transactions are invalid
+	 */
 	old_hdr.val = atomic64_read(ram_hdr_addr);
 	mbox->tag_own = (old_hdr.tag + 2) & (~0x1ul); /* next even number */
 	new_hdr.val = 0;
@@ -76,7 +76,7 @@ void mbox_init(struct mbox *mbox, void *mbox_base, void *ram_base,
 }
 
 int mbox_send(struct mbox *mbox, struct mbox_hdr *hdr, const void *txmsg,
-		size_t txsize, void *rxmsg, size_t rxsize)
+	      size_t txsize, void *rxmsg, size_t rxsize)
 {
 	atomic64_t *ram_hdr_addr = MBOX_RAM_ADDRESS(mbox, MBOX_CHAN_OWN);
 	 /* body is right after hdr */
@@ -119,7 +119,7 @@ int mbox_send(struct mbox *mbox, struct mbox_hdr *hdr, const void *txmsg,
 	/* wait for response */
 	wait = MBOX_WAIT_TIME;
 	while (wait) {
-		msleep(10);
+		usleep_range(10000, 20000);
 		ram_hdr.val = atomic64_read(ram_hdr_addr);
 		if (ram_hdr.chan_state == MBOX_CHAN_STATE_RES)
 			break;
@@ -131,7 +131,7 @@ int mbox_send(struct mbox *mbox, struct mbox_hdr *hdr, const void *txmsg,
 		return -1; /* tag mismatch */
 	(mbox->tag_own)++;
 
-	len = min((size_t)ram_hdr.len, rxsize);
+	len = min_t(size_t, (size_t)ram_hdr.len, rxsize);
 	memcpy(rxmsg, ram_body_addr, len);
 	hdr->res_code = ram_hdr.res_code;
 
@@ -139,7 +139,7 @@ int mbox_send(struct mbox *mbox, struct mbox_hdr *hdr, const void *txmsg,
 }
 
 int mbox_receive(struct mbox *mbox, struct mbox_hdr *hdr, void *rxmsg,
-		size_t rxsize)
+		 size_t rxsize)
 {
 	atomic64_t *ram_hdr_addr = MBOX_RAM_ADDRESS(mbox, MBOX_CHAN_PARTY);
 	/* body is right after hdr */
@@ -186,13 +186,13 @@ int mbox_receive(struct mbox *mbox, struct mbox_hdr *hdr, void *rxmsg,
 	hdr->res_code = MBOX_RET_SUCCESS;
 
 	/* copy the msg body */
-	len = min((size_t)ram_hdr.len, rxsize);
+	len = min_t(size_t, (size_t)ram_hdr.len, rxsize);
 	memcpy(rxmsg, ram_body_addr, len);
 	return len;
 }
 
 int mbox_reply(struct mbox *mbox, uint8_t res_code, const void *txmsg,
-		size_t txsize)
+	       size_t txsize)
 {
 	atomic64_t *ram_hdr_addr = MBOX_RAM_ADDRESS(mbox, MBOX_CHAN_PARTY);
 	/* body is right after hdr */
@@ -236,7 +236,8 @@ int mbox_reply(struct mbox *mbox, uint8_t res_code, const void *txmsg,
 
 	/* change the channel state and notify about new msg - write to MBOX
 	 * register is just for IRQ generation, the value written there is
-	 * not so important */
+	 * not so important
+	 */
 	atomic64_set(ram_hdr_addr, ram_hdr.val);
 
 	return 0;

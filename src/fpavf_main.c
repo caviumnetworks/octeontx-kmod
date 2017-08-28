@@ -17,7 +17,7 @@
 #define DRV_NAME "octeontx-fpavf"
 #define DRV_VERSION "0.1"
 
-static int setup_test = 1;
+static int setup_test;
 module_param(setup_test, int, 0644);
 MODULE_PARM_DESC(setup_test, "does a test after doing setup");
 
@@ -61,20 +61,18 @@ static u64 fpa_vf_alloc(struct fpavf *fpa, u32 aura)
 
 static int fpa_vf_do_test(struct fpavf *fpa, u64 num_buffers)
 {
-	int buf_count = num_buffers;
 	u64 *buf;
 	u64 avail;
 	int i;
 
 	buf = kcalloc(num_buffers, sizeof(u64), GFP_KERNEL);
-	if (!buf) {
-		dev_err(&fpa->pdev->dev, "setup test Failed\n");
+	if (!buf)
 		return -ENOMEM;
-	}
+
 	memset(buf, 0, sizeof(u64) * num_buffers);
 
 	i = 0;
-	while (buf_count) {
+	while (true) {
 		buf[i] = fpa_vf_alloc(fpa, 0);
 		if (!buf[i])
 			break;
@@ -88,7 +86,7 @@ static int fpa_vf_do_test(struct fpavf *fpa, u64 num_buffers)
 	}
 
 	while (i) {
-		fpa_vf_free(fpa, 0, buf[i], 0);
+		fpa_vf_free(fpa, 0, buf[i-1], 0);
 		i--;
 	}
 	avail = fpavf_reg_read(fpa, FPA_VF_VHPOOL_AVAILABLE(0));
@@ -157,8 +155,6 @@ static int fpa_vf_setup(struct fpavf *fpa, u64 num_buffers, u32 buf_len,
 
 	buf_len = round_up(buf_len, FPA_LN_SIZE);
 	num_buffers = round_up(num_buffers, FPA_LN_SIZE);
-	fpa->pool_size = round_up(num_buffers / fpa->stack_ln_ptrs,
-			FPA_LN_SIZE);
 	fpa->pool_size = num_buffers * FPA_LN_SIZE;
 
 	fpa->pool_addr = dma_zalloc_coherent(&fpa->pdev->dev, fpa->pool_size,
@@ -215,9 +211,9 @@ static int fpa_vf_setup(struct fpavf *fpa, u64 num_buffers, u32 buf_len,
 	if (setup_test)
 		fpa_vf_do_test(fpa, num_buffers);
 
-	//Setup THRESHOLD */
-	fpavf_reg_write(fpa, FPA_VF_VHAURA_CNT_THRESHOLD(0), num_buffers/2);
-	fpavf_reg_write(fpa, FPA_VF_VHAURA_CNT_LIMIT(0), num_buffers - 50);
+	/*Setup THRESHOLD*/
+	fpavf_reg_write(fpa, FPA_VF_VHAURA_CNT_THRESHOLD(0), num_buffers / 2);
+	fpavf_reg_write(fpa, FPA_VF_VHAURA_CNT_LIMIT(0), num_buffers - 110);
 
 	return 0;
 }
@@ -251,7 +247,8 @@ static struct fpavf *fpa_vf_get(u16 domain_id, u16 subdomain_id,
 		hdr.coproc = FPA_COPROC;
 		hdr.msg = IDENTIFY;
 		hdr.vfid = subdomain_id;
-		ret = master->send_message(&hdr, &req, &resp, master_data, NULL);
+		ret = master->send_message(&hdr, &req, &resp,
+					master_data, NULL);
 		if (ret)
 			return NULL;
 
@@ -263,7 +260,8 @@ static struct fpavf *fpa_vf_get(u16 domain_id, u16 subdomain_id,
 				continue;
 
 			/* get did && sdid */
-			reg = fpavf_reg_read(curr, FPA_VF_VHAURA_CNT_THRESHOLD(0));
+			reg = fpavf_reg_read(curr,
+					     FPA_VF_VHAURA_CNT_THRESHOLD(0));
 
 			reg = reg >> 8;
 			d_id = (reg & 0xffff);
@@ -380,6 +378,7 @@ static void fpavf_irq_free(struct fpavf *fpa)
 
 	free_irq(fpa->msix_entries[0].vector, fpa);
 	pci_disable_msix(fpa->pdev);
+	devm_kfree(&fpa->pdev->dev, fpa->msix_entries);
 }
 
 static int fpavf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
@@ -460,6 +459,11 @@ static void fpavf_remove(struct pci_dev *pdev)
 	spin_unlock(&octeontx_fpavf_devices_lock);
 
 	fpavf_irq_free(fpa);
+	pcim_iounmap(pdev, fpa->reg_base);
+	pci_disable_device(pdev);
+	pci_release_regions(pdev);
+
+	devm_kfree(&pdev->dev, fpa);
 }
 
 /* devices supported */

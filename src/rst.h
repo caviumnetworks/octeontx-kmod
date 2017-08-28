@@ -16,12 +16,13 @@
 /* reg offset */
 #define RST_BOOT	0x1600
 
-#define PLL_REF_CLK	(50*1000*1000)
+#define PLL_REF_CLK	(50 * 1000 * 1000)
 
 struct rst_com_s {
 	u64 (*get_sclk_freq)(int id);
 	/* Will add rest function based on use-case */
 };
+
 extern struct rst_com_s rst_com;
 
 #endif
