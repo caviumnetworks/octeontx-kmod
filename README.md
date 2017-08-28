@@ -68,6 +68,12 @@ PF <--> VF.
 | fpapf_main.c        | ONA External mempool PF driver                        |
 | ssopf_main.c        | ONA Event based Schedular PF driver                   |
 | ssowpf_main.c       | ONA HWS PF driver				      |
+| lbk_main.c          | ONA LBK PF driver				      |
+| bgx.c               | ONA BGX PF driver				      |
+| pki_main.c          | ONA PKI PF driver				      |
+| pkopf_main.c        | ONA PKO PF driver				      |
+| timpf_main.c       | ONA TIMER PF driver				      |
+
 
 ## Configs
 
@@ -81,90 +87,89 @@ Has patches for kernel and dpdk.
 
 Refer "Build and Install" to apply patches on linux 4.9 kernel.
 
-2. DPDK bind script patch is in patches/dpdk directory.
-
-Apply patch on top of dpdk:
-
-	$ git am patches/dpdk/*.patch
-
-It's a temporary hack to let dpdk's binding script detect Cavium PCI devices.
-
 Cavium PCI device snapshot:
 
 	$ ./usertools/dpdk-devbind.py --status
 
 	Network devices using DPDK-compatible driver
 	============================================
-	<none>
+	0001:02:00.1 'Device a0dd' drv=vfio-pci unused=
+	0001:03:00.1 'Device a049' drv=vfio-pci unused=
 
 	Network devices using kernel driver
 	===================================
-	0000:01:10.0 'Device a026' if= drv=thunder-BGX unused=vfio-pci 
-	0000:01:10.1 'Device a026' if= drv=thunder-BGX unused=vfio-pci 
-	0001:01:00.0 'Device a01e' if= drv=thunder-nic unused=vfio-pci 
-	0001:01:00.1 'Device a034' if=eth6 drv=thunder-nicvf unused=vfio-pci 
-	0001:01:00.2 'Device a034' if=eth5 drv=thunder-nicvf unused=vfio-pci 
-	0001:01:00.3 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:00.4 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:00.5 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:00.6 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:00.7 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:01.0 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:01.1 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:01.2 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:01.3 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
-	0001:01:01.4 'Device a034' if= drv=thunder-nicvf unused=vfio-pci 
+	0000:01:10.0 'Device a026' if= drv=thunder-BGX unused=vfio-pci
+	0000:01:10.1 'Device a026' if= drv=thunder-BGX unused=vfio-pci
+	0001:01:00.0 'Device a01e' if= drv=thunder-nic unused=vfio-pci
+	0001:01:00.3 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:00.4 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:00.5 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:00.6 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:00.7 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:01.0 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:01.1 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:01.2 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:01.3 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
+	0001:01:01.4 'Device a034' if= drv=thunder-nicvf unused=vfio-pci
 
-	Other network devices
+	Other Network devices
 	=====================
-	<none>
+	0001:01:00.1 'Device a034' unused=vfio-pci
+	0001:01:00.2 'Device a034' unused=vfio-pci
+	0001:02:00.2 'Device a0dd' unused=vfio-pci
+	0001:02:00.3 'Device a0dd' unused=vfio-pci
+	0001:02:00.4 'Device a0dd' unused=vfio-pci
+	0001:02:00.5 'Device a0dd' unused=vfio-pci
+	0001:02:00.6 'Device a0dd' unused=vfio-pci
+	0001:02:00.7 'Device a0dd' unused=vfio-pci
+	0001:02:01.0 'Device a0dd' unused=vfio-pci
+	0001:03:00.2 'Device a049' unused=vfio-pci
+	0001:03:00.3 'Device a049' unused=vfio-pci
+	0001:03:00.4 'Device a049' unused=vfio-pci
+	0001:03:00.5 'Device a049' unused=vfio-pci
+	0001:03:00.6 'Device a049' unused=vfio-pci
+	0001:03:00.7 'Device a049' unused=vfio-pci
+	0001:03:01.0 'Device a049' unused=vfio-pci
 
 	Crypto devices using DPDK-compatible driver
 	===========================================
+
 	<none>
 
 	Crypto devices using kernel driver
 	==================================
-	0000:01:00.1 'Device a00e' drv=octeontx-rst unused=vfio-pci
-	0000:07:00.0 'Device a04a' drv=octeontx-sso unused=vfio-pci
-	0000:08:00.0 'Device a04c' drv=octeontx-ssow unused=vfio-pci
-	0000:09:00.0 'Device a052' drv=octeontx-fpa unused=vfio-pci
-	0000:09:00.1 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:00.2 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:00.3 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:00.4 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:00.5 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:00.6 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:00.7 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.0 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.1 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.2 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.3 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.4 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.5 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.6 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:01.7 'Device a053' drv=octeontx-fpavf unused=vfio-pci
-	0000:09:02.0 'Device a053' drv=octeontx-fpavf unused=vfio-pci
+	<none>
 
-	Other crypto devices
+	Other Crypto devices
 	====================
-	0000:01:00.0 'Device a001' unused=vfio-pci
-	0000:01:01.7 'Device a035' unused=vfio-pci
-	0000:01:0c.0 'Device a023' unused=vfio-pci
-	0000:01:0c.1 'Device a023' unused=vfio-pci
-	0000:01:0c.2 'Device a023' unused=vfio-pci
-	0000:01:0d.0 'Device a042' unused=vfio-pci
-	0000:01:0d.1 'Device a042' unused=vfio-pci
-	0000:01:0d.2 'Device a042' unused=vfio-pci
-	0000:01:0d.3 'Device a042' unused=vfio-pci
-	0000:07:00.1 'Device a04b' unused=vfio-pci
-	0000:07:00.2 'Device a04b' unused=vfio-pci
-	0000:07:00.3 'Device a04b' unused=vfio-pci
-	0000:07:00.4 'Device a04b' unused=vfio-pci
-	0000:07:00.5 'Device a04b' unused=vfio-pci
-	0000:07:00.6 'Device a04b' unused=vfio-pci
-	0000:07:00.7 'Device a04b' unused=vfio-pci
-	0000:07:01.0 'Device a04b' unused=vfio-pci
+	0000:04:00.0 'Device a040' unused=vfio-pci
+	0000:05:00.0 'Device a040' unused=vfio-pci
+
+	Eventdev devices using DPDK-compatible driver
+	=============================================
+	0000:07:00.1 'Device a04b' drv=vfio-pci unused=
+	0000:07:00.2 'Device a04b' drv=vfio-pci unused=
+	0000:07:00.3 'Device a04b' drv=vfio-pci unused=
+	0000:07:00.4 'Device a04b' drv=vfio-pci unused=
+	0000:07:00.5 'Device a04b' drv=vfio-pci unused=
+	0000:07:00.6 'Device a04b' drv=vfio-pci unused=
+	0000:07:00.7 'Device a04b' drv=vfio-pci unused=
+	0000:07:01.0 'Device a04b' drv=vfio-pci unused=
+	0000:08:00.1 'Device a04d' drv=vfio-pci unused=
+	0000:08:00.2 'Device a04d' drv=vfio-pci unused=
+	0000:08:00.3 'Device a04d' drv=vfio-pci unused=
+	0000:08:00.4 'Device a04d' drv=vfio-pci unused=
+	0000:08:00.5 'Device a04d' drv=vfio-pci unused=
+	0000:08:00.6 'Device a04d' drv=vfio-pci unused=
+	0000:08:00.7 'Device a04d' drv=vfio-pci unused=
+	0000:08:01.0 'Device a04d' drv=vfio-pci unused=
+
+	Eventdev devices using kernel driver
+	====================================
+	<none>
+
+	Other Eventdev devices
+	======================
 	0000:07:01.1 'Device a04b' unused=vfio-pci
 	0000:07:01.2 'Device a04b' unused=vfio-pci
 	0000:07:01.3 'Device a04b' unused=vfio-pci
@@ -189,14 +194,6 @@ Cavium PCI device snapshot:
 	0000:07:03.6 'Device a04b' unused=vfio-pci
 	0000:07:03.7 'Device a04b' unused=vfio-pci
 	0000:07:04.0 'Device a04b' unused=vfio-pci
-	0000:08:00.1 'Device a04d' unused=vfio-pci
-	0000:08:00.2 'Device a04d' unused=vfio-pci
-	0000:08:00.3 'Device a04d' unused=vfio-pci
-	0000:08:00.4 'Device a04d' unused=vfio-pci
-	0000:08:00.5 'Device a04d' unused=vfio-pci
-	0000:08:00.6 'Device a04d' unused=vfio-pci
-	0000:08:00.7 'Device a04d' unused=vfio-pci
-	0000:08:01.0 'Device a04d' unused=vfio-pci
 	0000:08:01.1 'Device a04d' unused=vfio-pci
 	0000:08:01.2 'Device a04d' unused=vfio-pci
 	0000:08:01.3 'Device a04d' unused=vfio-pci
@@ -213,15 +210,36 @@ Cavium PCI device snapshot:
 	0000:08:02.6 'Device a04d' unused=vfio-pci
 	0000:08:02.7 'Device a04d' unused=vfio-pci
 	0000:08:03.0 'Device a04d' unused=vfio-pci
-	0000:0a:00.0 'Device a050' unused=vfio-pci
-	0000:0b:00.0 'Device a057' unused=vfio-pci
-	0001:02:00.0 'Device a047' unused=vfio-pci
-	0001:03:00.0 'Device a048' unused=vfio-pci
-	0001:05:00.0 'Device a045' unused=vfio-pci
+
+	Mempool devices using DPDK-compatible driver
+	============================================
+	0000:09:00.3 'Device a053' drv=vfio-pci unused=
+
+	Mempool devices using kernel driver
+	===================================
+	0000:09:00.1 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:00.2 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:00.4 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:00.5 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:00.6 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:00.7 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.0 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.1 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.2 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.3 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.4 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.5 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.6 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:01.7 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+	0000:09:02.0 'Device a053' if= drv=octeontx-fpavf unused=vfio-pci
+
+	Other Mempool devices
+	=====================
+	<none>
 
 Binding Cavium PCI devices to DPDK:
 
-1. Binding 6 queues and 6 ports.
+1. Binding 6 queues and 6 ports:
 
 Note that queues are SSOGRP_vf and ports SSOW_VF. SSOGRP_vf
 BDF starts from 0000:07:00.1 and SSOW_vf starts from 0000:08:00.1.
@@ -234,4 +252,20 @@ Use below command:
 		0000:07:00.1 0000:07:00.2 0000:07:00.3 0000:07:00.4
 		0000:07:00.5 0000:07:00.6
 
+2. For single port pktio setup, bind following resources:
 
+Note that the following resource are bind to userspace in below order
+	* fpa_vf (bdf start at 0000:09:00.3)
+	* ssow_vf (bdf start at 0000:08:00.1)
+	* ssogrp_vf (bdf start at 0000:07:00.1)
+	* pko_vf (bdf start at 0001:03:00.1)
+	* pki_vf (bdf start at 0001:02:00.1)
+
+Use below command:
+
+	$ ./usertools/dpdk-devbind.py -b vfio-pci 0000:09:00.3 0000:08:00.1
+		0000:08:00.2 0000:08:00.3 0000:08:00.4  0000:08:00.5
+		0000:08:00.6  0000:08:00.7 0000:08:01.0  0000:07:00.1
+		0000:07:00.2 0000:07:00.3 0000:07:00.4 0000:07:00.5
+		0000:07:00.6  0000:07:00.7  0000:07:01.0 0001:03:00.1
+		0001:02:00.1
