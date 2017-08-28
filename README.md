@@ -255,6 +255,7 @@ Use below command:
 2. For single port pktio setup, bind following resources:
 
 Note that the following resource are bind to userspace in below order
+
 	* fpa_vf (bdf start at 0000:09:00.3)
 	* ssow_vf (bdf start at 0000:08:00.1)
 	* ssogrp_vf (bdf start at 0000:07:00.1)
