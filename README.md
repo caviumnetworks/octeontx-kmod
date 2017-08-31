@@ -270,3 +270,19 @@ Use below command:
 		0000:07:00.2 0000:07:00.3 0000:07:00.4 0000:07:00.5
 		0000:07:00.6  0000:07:00.7  0000:07:01.0 0001:03:00.1
 		0001:02:00.1
+
+## dpdk sample network applications commands
+
+sudo ./build/app/testpmd -c 700 --base-virtaddr=0x100000000000 --mbuf-pool-ops="octeontx_fpavf" --vdev='event_octeontx' --vdev='eth_octeontx,nr_port=1' -- --rxq=1 --txq=1 --nb-cores=1 --total-num-mbufs=16384 --port-topology=chained --disable-hw-vlan-filter
+
+sudo ./build/app/testpmd -c 700 --base-virtaddr=0x100000000000 --mbuf-pool-ops="octeontx_fpavf" --vdev='event_octeontx' --vdev='eth_octeontx,nr_port=2' -- --rxq=1 --txq=1 --nb-cores=2 --total-num-mbufs=16384 --disable-hw-vlan-filter
+
+l2fwd command:
+sudo ./examples/l2fwd/build/app/l2fwd -l 8-11 --base-virtaddr=0x100000000000 --mbuf-pool-ops="octeontx_fpavf" --vdev='event_octeontx' --vdev='eth_octeontx,nr_port=1' -- -p 0x1 -q 1
+sudo ./examples/l2fwd/build/app/l2fwd -l 8-11 --base-virtaddr=0x100000000000 --mbuf-pool-ops="octeontx_fpavf" --vdev='event_octeontx' --vdev='eth_octeontx,nr_port=2' -- -p 0x3 -q 1
+
+l3fwd command:
+sudo ./examples/l3fwd/build/l3fwd -c F00 --base-virtaddr=0x100000000000  --vdev='event_octeontx' --vdev='eth_octeontx,nr_port=1' --mbuf-pool-ops="octeontx_fpavf" -- -p 0x1 --config="(0,0,8)" -P
+
+sudo ./examples/l3fwd/build/l3fwd -c F00 --base-virtaddr=0x100000000000  --vdev='event_octeontx' --vdev='eth_octeontx,nr_port=2' --mbuf-pool-ops="octeontx_fpavf" -- -p 0x3 --config="(0,0,8),(1,0,9)" -P
+
