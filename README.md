@@ -29,7 +29,7 @@ Apply octeontx-kmod specific patches to kernel:
 
 Copy octeontx config to linux :
 
-	$ cp ../octeontx-kmo/configs/config_octeontx .
+	$ cp ../octeontx-kmod/configs/config_octeontx .config
 
 Build and Install the kernel on Octeontx(T83) target:
 

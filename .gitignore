@@ -1,6 +1,16 @@
 Module.symvers
 modules.order
+*.o.*
 *.o
+*.ko.*
 *.ko
 *.mod.c
 .tmp_versions/
+cscope.out.po
+cscope.out.in
+cscope.out
+cscope.files
+tags
+TAGS
+uninstall.sh
+uninstall.sh~
