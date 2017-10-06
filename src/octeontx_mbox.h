@@ -732,7 +732,7 @@ typedef struct mbox_pki_port_create_qos {
 	struct mbox_pki_qos_entry qos_entry[MBOX_PKI_MAX_QOS_ENTRY];
 } mbox_pki_qos_cfg_t;
 
-/* pki flow/style enable qos */
+/* pki flow/style modify qos */
 typedef struct mbox_pki_port_modify_qos_entry {
 	u8 port_type;
 	u16 index;
@@ -744,8 +744,16 @@ typedef struct mbox_pki_port_modify_qos_entry {
 		u8 f_gaura:1;
 		u8 f_grptag_ok:1;
 		u8 f_grptag_bad:1;
+		u8 f_tag_type:1;
 	} mmask;
+	u8 tag_type;
 	struct mbox_pki_qos_entry qos_entry;
 } mbox_pki_mod_qos_t;
+
+/* pki flow/style delete qos */
+typedef struct mbox_pki_port_delete_qos_entry {
+	u8 port_type;
+	u16 index;
+} mbox_pki_del_qos_t;
 
 #endif

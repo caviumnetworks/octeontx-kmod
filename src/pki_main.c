@@ -380,6 +380,14 @@ static int pki_receive_message(u32 id, u16 domain_id,
 		hdr->res_code = pki_port_create_qos(vf, hdr->vfid,
 						    mdata);
 		break;
+	case MBOX_PKI_PORT_MODIFY_QOS:
+		hdr->res_code = pki_port_modify_qos(vf, hdr->vfid,
+						    mdata);
+		break;
+	case MBOX_PKI_PORT_DELETE_QOS:
+		hdr->res_code = pki_port_delete_qos(vf, hdr->vfid,
+						    mdata);
+		break;
 	case MBOX_PKI_PORT_START:
 		hdr->res_code = pki_port_start(vf, hdr->vfid, mdata);
 		break;

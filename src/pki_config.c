@@ -7,7 +7,6 @@
  */
 
 #include "pki.h"
-
 #define MAX_BGX_PKIND	16
 #define MAX_LBK_PKIND	16
 #define MAX_SDP_PKIND	16
@@ -294,6 +293,112 @@ int pki_port_create_qos(struct pkipf_vf *vf, u16 vf_id,
 		pki_reg_write(pki, PKI_CLX_STYLEX_CFG(i, style), cfg);
 	}
 	port->state = PKI_PORT_STOP;
+	return MBOX_RET_SUCCESS;
+}
+
+int pki_port_modify_qos(struct pkipf_vf *vf, u16 vf_id,
+		mbox_pki_mod_qos_t *qcfg)
+{
+	struct pki_port *port;
+	struct pki_t	*pki = vf->pki;
+	int qpg_base;
+	int i;
+	int style;
+	u64 cfg;
+
+	switch (qcfg->port_type) {
+	case OCTTX_PORT_TYPE_NET:
+		port = &(vf->bgx_port[vf_id]);
+		break;
+	case OCTTX_PORT_TYPE_INT:
+		port = &(vf->lbk_port[vf_id]);
+		break;
+	default:
+		return MBOX_RET_INVALID;
+	}
+	if (port->state == PKI_PORT_CLOSE)
+		return MBOX_RET_INVALID;
+	style = port->init_style;
+	qpg_base = port->pkind * 64;
+	if ((qpg_base + qcfg->index) >= vf->max_qpgs)
+		return MBOX_RET_INVALID;
+
+	for (i = 0; qcfg->mmask.f_tag_type && i < pki->max_cls; i++) {
+		cfg = pki_reg_read(pki, PKI_CLX_STYLEX_ALG(i, style));
+		set_field(&cfg, PKI_STYLE_ALG_TT_MASK,
+			  PKI_STLYE_ALG_TT_SHIFT, qcfg->tag_type);
+		pki_reg_write(pki, PKI_CLX_STYLEX_ALG(i, style), cfg);
+	}
+
+	cfg = pki_reg_read(pki, PKI_QPG_TBLX(qpg_base + qcfg->index));
+	if (qcfg->mmask.f_port_add)
+		set_field(&cfg, PKI_QPG_TBL_PORT_ADD_MASK,
+				PKI_QPG_TBL_PORT_ADD_SHIFT,
+				qcfg->qos_entry.port_add);
+	if (qcfg->mmask.f_grp_ok)
+		set_field(&cfg, PKI_QPG_TBL_GRP_OK_MASK,
+				PKI_QPG_TBL_GRP_OK_SHIFT,
+				qcfg->qos_entry.ggrp_ok);
+	if (qcfg->mmask.f_grp_bad)
+		set_field(&cfg, PKI_QPG_TBL_GRP_BAD_MASK,
+				PKI_QPG_TBL_GRP_BAD_SHIFT,
+				qcfg->qos_entry.ggrp_bad);
+	if (qcfg->mmask.f_gaura)
+		set_field(&cfg, PKI_QPG_TBL_GAURA_MASK,
+				PKI_QPG_TBL_GAURA_SHIFT,
+				qcfg->qos_entry.gaura);
+	if (qcfg->mmask.f_grptag_ok)
+		set_field(&cfg, PKI_QPG_TBL_GRPTAG_OK_MASK,
+				PKI_QPG_TBL_GRPTAG_OK_SHIFT,
+				qcfg->qos_entry.grptag_ok);
+	if (qcfg->mmask.f_grptag_bad)
+		set_field(&cfg, PKI_QPG_TBL_GRPTAG_BAD_MASK,
+				PKI_QPG_TBL_GRPTAG_BAD_SHIFT,
+				qcfg->qos_entry.grptag_bad);
+	pki_reg_write(pki, PKI_QPG_TBLX(qpg_base + qcfg->index), cfg);
+	for (i = 0; i < pki->max_cls; i++) {
+		cfg = pki_reg_read(pki, PKI_CLX_STYLEX_CFG(i,
+							   port->init_style));
+		cfg &= ~(0x1ULL << PKI_STYLE_CFG_DROP_SHIFT);
+		pki_reg_write(pki, PKI_CLX_STYLEX_CFG(i,
+						      port->init_style), cfg);
+	}
+
+	return MBOX_RET_SUCCESS;
+}
+
+int pki_port_delete_qos(struct pkipf_vf *vf, u16 vf_id,
+		mbox_pki_del_qos_t *qcfg)
+{
+	int qpg_base;
+	int i;
+	u64 cfg;
+	struct pki_port *port;
+	struct pki_t	*pki = vf->pki;
+
+	switch (qcfg->port_type) {
+	case OCTTX_PORT_TYPE_NET:
+		port = &(vf->bgx_port[vf_id]);
+		break;
+	case OCTTX_PORT_TYPE_INT:
+		port = &(vf->lbk_port[vf_id]);
+		break;
+	default:
+		return MBOX_RET_INVALID;
+	}
+	if (port->state == PKI_PORT_CLOSE)
+		return MBOX_RET_INVALID;
+	qpg_base = port->pkind * 64;
+	if ((qpg_base + qcfg->index) >= vf->max_qpgs)
+		return MBOX_RET_INVALID;
+	for (i = 0; i < pki->max_cls; i++) {
+		cfg = pki_reg_read(pki, PKI_CLX_STYLEX_CFG(i,
+							   port->init_style));
+		cfg |= (0x1ULL << PKI_STYLE_CFG_DROP_SHIFT);
+		pki_reg_write(pki, PKI_CLX_STYLEX_CFG(i,
+						      port->init_style), cfg);
+	}
+
 	return MBOX_RET_SUCCESS;
 }
 
